@@ -64,7 +64,7 @@ class MouseGestureRecognizer(QGestureRecognizer):
     Mouse Gesture Recognizer
     """
 
-    def __init__(self):
+    def __init__(self, parent):
         """
         Initialize Mouse Gesture Recognizer
         """
@@ -76,6 +76,8 @@ class MouseGestureRecognizer(QGestureRecognizer):
 
         log = function_name + ': entry'
         logging.info(log)
+
+        self.__parent = parent
 
         self.__pressed = False
         self.__timestamp = 0
@@ -170,7 +172,8 @@ class MouseGestureRecognizer(QGestureRecognizer):
             result = QGestureRecognizer.Ignore
         elif event.type() == QWheelEvent.Wheel:
             timestamp = time.time()
-            if timestamp-self.__timestamp < 0.7:
+            if timestamp - self.__timestamp < 0.7 and not self.__parent.control_menu_photo_camera \
+                or timestamp - self.__timestamp < 2 and self.__parent.control_menu_photo_camera:
                 result = QGestureRecognizer.Ignore
             else:
                 self.__timestamp = timestamp
@@ -224,7 +227,7 @@ class Display(QLabel):
         log = function_name + ': entry'
         logging.info(log)
 
-        self.grabGesture(QGestureRecognizer.registerRecognizer(MouseGestureRecognizer()))
+        self.grabGesture(QGestureRecognizer.registerRecognizer(MouseGestureRecognizer(parent)))
         self.__parent = parent
         self.__index = 0
         self.__zoom = False
@@ -670,21 +673,11 @@ class CameraScreen(QMainWindow):
         self.panel_control_saturation_button_up.clicked.connect(
             self.__on_panel_control_saturation_button_up_clicked)
 
-        self.panel_control_delete_button = QPushButton()
-        self.panel_control_delete_button.setFixedSize(80,80)
-        self.panel_control_delete_button.setToolTip('Delete an image')
-        self.panel_control_delete_button.setIcon(QIcon(
-            'share/icons/delete_FILL0_wght400_GRAD0_opsz48.svg'))
-        self.panel_control_delete_button.setIconSize(QSize(80,80))
-        self.panel_control_delete_button.clicked.connect(
-            self.__on_panel_control_delete_button_clicked)
-        self.panel_control_delete_button.setEnabled(False)
-
         self.panel_control_info_label = QLabel()
-        self.panel_control_info_label.setFixedSize(80,80)
+        self.panel_control_info_label.setFixedSize(160,80)
         self.panel_control_info_label.setToolTip('Image information')
         font = self.panel_control_info_label.font()
-        font.setPointSize(10)
+        font.setPointSize(12)
         self.panel_control_info_label.setFont(font)
         self.panel_control_info_label.setAlignment(Qt.AlignCenter)
 
@@ -695,7 +688,6 @@ class CameraScreen(QMainWindow):
         panel_control_h_layout.addWidget(self.panel_control_saturation_button_down)
         panel_control_h_layout.addWidget(self.panel_control_saturation_label)
         panel_control_h_layout.addWidget(self.panel_control_saturation_button_up)
-        panel_control_h_layout.addWidget(self.panel_control_delete_button)
         panel_control_h_layout.addWidget(self.panel_control_info_label)
 
         self.panel_control.setLayout(panel_control_h_layout)
@@ -855,16 +847,17 @@ class CameraScreen(QMainWindow):
         control_v_layout.addWidget(self.control_sharpness)
         control_v_layout.addWidget(self.control_exposure)
 
-        self.control_shutter = QPushButton()
-        self.control_shutter.setFixedSize(160,160)
-        self.control_shutter.setToolTip('Take a picture')
-        self.control_shutter.setIcon(QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
-        self.control_shutter.setIconSize(QSize(160,160))
-        self.control_shutter.clicked.connect(self.__on_control_shutter_clicked)
+        self.control_shutter_button = QPushButton()
+        self.control_shutter_button.setFixedSize(160,160)
+        self.control_shutter_button.setToolTip('Take a picture')
+        self.control_shutter_button.setIcon(
+            QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+        self.control_shutter_button.setIconSize(QSize(160,160))
+        self.control_shutter_button.clicked.connect(self.__on_control_shutter_button_clicked)
 
         self.__shutter_clicked = False
 
-        control_v_layout.addWidget(self.control_shutter)
+        control_v_layout.addWidget(self.control_shutter_button)
 
         self.control.setLayout(control_v_layout)
 
@@ -1008,7 +1001,7 @@ class CameraScreen(QMainWindow):
             else:
                 iso = ''
             self.panel_control_info_label.setText(
-                'DSCF'+str(index).zfill(4) + '.\nJPG\n'+str(image.width) + 'x' + str(image.height) +
+                'DSCF'+str(index).zfill(4) + '.JPG\n'+str(image.width) + 'x' + str(image.height) +
                 '\n'+shutter_speed+'\n' + iso)
 
         log = function_name + ': exit'
@@ -1383,7 +1376,6 @@ class CameraScreen(QMainWindow):
             os.remove('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
         if len(images) == 1:
             self.__index = -1
-            self.panel_control_delete_button.setEnabled(False)
             if not self.control_menu_photo_camera:
                 self.panel_display.set_index(self.__index)
                 self.__on_control_menu_photo_gallery_button_clicked()
@@ -1428,8 +1420,13 @@ class CameraScreen(QMainWindow):
                 QPixmap('media/DSCF'+str(self.__index).zfill(4)+'.JPG').scaled(640,480))
             self.panel_display.set_index(self.__index)
             self.panel_display.set_zoom(False)
-            self.control_shutter.setEnabled(False)
-            self.panel_control_delete_button.setEnabled(True)
+            self.control_shutter_button.setIcon(
+                QIcon('share/icons/delete_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.control_shutter_button.setToolTip('Delete a image')
+            CameraScreen.reconnect(
+                self.control_shutter_button.clicked,
+                self.__on_control_shutter_button_clicked,
+                self.__on_panel_control_delete_button_clicked)
             self.panel_control_file_info_label_set_text(self.__index)
         else:
             self.control_menu_photo_camera = True
@@ -1440,8 +1437,13 @@ class CameraScreen(QMainWindow):
             self.control_menu_photo_gallery_button.setIcon(
                 QIcon('share/icons/photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
             self.__index = self.panel_display.get_index()
-            self.control_shutter.setEnabled(True)
-            self.panel_control_delete_button.setEnabled(False)
+            self.control_shutter_button.setIcon(
+                QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.control_shutter_button.setToolTip('Take a picture')
+            CameraScreen.reconnect(
+                self.control_shutter_button.clicked,
+                self.__on_panel_control_delete_button_clicked,
+                self.__on_control_shutter_button_clicked)
             self.__panel_control_stream_info_label_set_text()
 
         log = function_name + ': exit'
@@ -1565,7 +1567,7 @@ class CameraScreen(QMainWindow):
             else:
                 iso = str(int(analog_gain*100/256))
             self.panel_control_info_label.setText(
-                self.__model + '\n\n' + str(structure.get_value('width')) + 'x' +
+                self.__model + '\n' + str(structure.get_value('width')) + 'x' +
                 str(structure.get_value('height')) + '\n' + shutter_speed + '"\nISO ' + iso)
 
         log = function_name + ': exit'
@@ -1670,8 +1672,9 @@ class CameraScreen(QMainWindow):
         elif shutter_speed < 111111:
             shutter_speed = 111111
             self.__capturing_shutter_speed = '1/9'
-            self.__pipeline.set_state(Gst.State.NULL)
-            self.__pipeline.set_state(Gst.State.PLAYING)
+            if self.control_menu_photo_camera:
+                self.__pipeline.set_state(Gst.State.NULL)
+                self.__pipeline.set_state(Gst.State.PLAYING)
         elif shutter_speed < 125000:
             shutter_speed = 125000
             self.__capturing_shutter_speed = '1/8'
@@ -1700,7 +1703,7 @@ class CameraScreen(QMainWindow):
             shutter_speed = shutter_speed + 1000000
             self.__capturing_shutter_speed = \
                 str(int(shutter_speed/1000000)) + '/1'
-            if shutter_speed in (2000000, 7000000):
+            if shutter_speed in (2000000, 7000000) and self.control_menu_photo_camera:
                 self.__pipeline.set_state(Gst.State.NULL)
                 self.__pipeline.set_state(Gst.State.PLAYING)
         else:
@@ -1735,7 +1738,7 @@ class CameraScreen(QMainWindow):
             shutter_speed = shutter_speed - 1000000
             self.__capturing_shutter_speed = str(
                 int(shutter_speed/1000000)) + '/1'
-            if shutter_speed in (1000000, 6000000):
+            if shutter_speed in (1000000, 6000000) and self.control_menu_photo_camera:
                 self.__pipeline.set_state(Gst.State.NULL)
                 self.__pipeline.set_state(Gst.State.PLAYING)
         elif shutter_speed > 500000:
@@ -1928,7 +1931,7 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
 
-    def __on_control_shutter_clicked(self):
+    def __on_control_shutter_button_clicked(self):
         """Handles taking a picture
         """
 
@@ -1939,8 +1942,9 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
         self.__shutter_clicked = True
-        self.control_shutter.setToolTip('Taking a picture')
-        self.control_shutter.setIcon(QIcon('share/icons/circle_FILL1_wght400_GRAD0_opsz48.svg'))
+        self.control_shutter_button.setToolTip('Taking a picture')
+        self.control_shutter_button.setIcon(
+            QIcon('share/icons/circle_FILL1_wght400_GRAD0_opsz48.svg'))
 
         log = function_name + ': exit'
         logging.info(log)
@@ -1980,8 +1984,9 @@ class CameraScreen(QMainWindow):
             self.panel_display.set_index(self.__index)
             self.control_menu_photo_gallery_button.setEnabled(True)
             self.__shutter_clicked = False
-            self.control_shutter.setToolTip('Take a picture')
-            self.control_shutter.setIcon(QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.control_shutter_button.setToolTip('Take a picture')
+            self.control_shutter_button.setIcon(
+                QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
 
         log = function_name + ': exit'
         logging.info(log)
@@ -2039,13 +2044,43 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
 
+    @staticmethod
+    def reconnect(pyqt_signal, old_handler=None, new_handler=None):
+        """Reconnects signal from old handler to new handler
+
+        Args:
+            pyqt_signal (PYQT_SIGNAL): signal
+            old_handler (method, optional): old handler. Defaults to None.
+            new_handler (method, optional): new handler. Defaults to None.
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.info(log)
+
+        try:
+            if old_handler is not None:
+                while True:
+                    pyqt_signal.disconnect(old_handler)
+            else:
+                pyqt_signal.disconnect()
+        except TypeError:
+            pass
+        if new_handler is not None:
+            pyqt_signal.connect(new_handler)
+
+        log = function_name + ': exit'
+        logging.info(log)
+
 
 def shutdown():
-    """Shhutdown handler
+    """Shutdown handler
     """
 
     function_name = "'" + threading.currentThread().name + "'." + \
-         inspect.currentframe().f_code.co_name
+        inspect.currentframe().f_code.co_name
 
     log = function_name + ': entry'
     logging.info(log)
