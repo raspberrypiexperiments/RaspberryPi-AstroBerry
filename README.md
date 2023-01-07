@@ -46,8 +46,6 @@ rm -rf RaspberryPi-AstroBerry
 
 ## Desired Feature List
 
-* Debug mode enriched with additional hardware monitors,
-* Configurable quit and power off buttons,
 * Configuration file,
 * Makefile.
 
