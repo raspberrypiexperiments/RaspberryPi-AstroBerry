@@ -558,7 +558,8 @@ class CameraScreen(QMainWindow):
 
         self.panel_display = Display(self)
         self.panel_display.setFixedSize(640,480)
-        self.panel_display.setToolTip('Double tap to toggle debug mode')
+        self.panel_display.setToolTip(
+            'Swipe left or right to change resolution or double tap to toggle debug mode')
         self.__win_id = self.panel_display.winId()
 
         self.panel_control = QWidget()
@@ -1432,7 +1433,8 @@ class CameraScreen(QMainWindow):
             self.control_menu_photo_camera = True
             self.__pipeline.set_state(Gst.State.PLAYING)
             self.__set_exif(str(int(self.source.get_property('analog-gain')*100/256)))
-            self.panel_display.setToolTip('Double tap to toggle debug mode')
+            self.panel_display.setToolTip(
+                'Swipe left or right to change resolution or double tap to toggle debug mode')
             self.control_menu_photo_gallery_button.setToolTip('Photo gallery')
             self.control_menu_photo_gallery_button.setIcon(
                 QIcon('share/icons/photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
