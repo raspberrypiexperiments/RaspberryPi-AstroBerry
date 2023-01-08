@@ -147,21 +147,21 @@ class MouseGestureRecognizer(QGestureRecognizer):
                 deg = math.degrees(math.atan2(delta.y(), delta.x()))
                 if deg < 0:
                     deg = 360+deg
-                if deg < 10 or deg > 350:
+                if deg < 20 or deg > 340:
                     deg = 0
-                if 35 < deg < 55:
+                if 25 < deg < 65:
                     deg = 45
-                if 80 < deg < 100:
+                if 70 < deg < 110:
                     deg = 90
-                if 125 < deg < 145:
+                if 115 < deg < 155:
                     deg = 135
-                if 170 < deg < 190:
+                if 160 < deg < 200:
                     deg = 180
-                if 215 < deg < 235:
+                if 205 < deg < 245:
                     deg = 225
-                if 260 < deg < 280:
+                if 250 < deg < 290:
                     deg = 270
-                if 305 < deg < 325:
+                if 295 < deg < 335:
                     deg = 315
                 gesture.setSwipeAngle(deg)
                 result = QGestureRecognizer.TriggerGesture
@@ -426,14 +426,14 @@ class Display(QLabel):
                     self.__y = self.__y - 240*480/pixmap.height()
                 if swipe_gesture.verticalDirection() == QSwipeGesture.Down:
                     self.__y = self.__y + 240*480/pixmap.height()
-                if self.__x >= 640:
-                    self.__x = 639
-                if self.__x < 0:
-                    self.__x = 0
-                if self.__y >= 480:
-                    self.__y = 479
-                if self.__y < 0:
-                    self.__y = 0
+                if self.__x >= 639:
+                    self.__x = 640 - 320*640/pixmap.width()
+                if self.__x <= 0:
+                    self.__x = 320*640/pixmap.width()
+                if self.__y >= 479:
+                    self.__y = 480 - 240*480/pixmap.height()
+                if self.__y <= 0:
+                    self.__y = 240*480/pixmap.height()
                 x = int(self.__x*pixmap.width()/640) - 320
                 y = int(self.__y*pixmap.height()/480) - 240
                 if x < 0:
