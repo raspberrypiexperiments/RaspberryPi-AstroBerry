@@ -105,7 +105,7 @@ class MouseGestureRecognizer(QGestureRecognizer):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -132,7 +132,7 @@ class MouseGestureRecognizer(QGestureRecognizer):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': event.type=' + str(event.type())
         logging.info(log)
@@ -264,7 +264,7 @@ class Display(QLabel):
         super().__init__(parent)
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -288,7 +288,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': index=' + str(index)
         logging.info(log)
@@ -307,7 +307,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -328,7 +328,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': zoom=' + str(zoom)
         logging.info(log)
@@ -350,7 +350,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': event.type=' + str(event.type())
         logging.info(log)
@@ -383,7 +383,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -416,7 +416,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': event.type=' + str(event.type())
         logging.info(log)
@@ -448,7 +448,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': event.type=' + str(event.type())
         logging.info(log)
@@ -523,7 +523,7 @@ class Display(QLabel):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': event.type=' + str(event.type())
         logging.info(log)
@@ -582,7 +582,7 @@ class CameraScreen(QMainWindow):
         super().__init__(None)
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -939,7 +939,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -987,7 +987,7 @@ class CameraScreen(QMainWindow):
         """Start the video stream from the camera
         """
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1008,44 +1008,43 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': index=' + str(index)
         logging.info(log)
 
-        if not self.control_menu_photo_camera:
-            image = PIL.Image.open('media/DSCF'+str(index).zfill(4)+'.JPG')
+        image = PIL.Image.open('media/DSCF'+str(index).zfill(4)+'.JPG')
 
-            if image._getexif() is None:
-                exif = {}
-            else:
-                exif = {
-                    PIL.ExifTags.TAGS[k]: v
-                    for k, v in image._getexif().items()
-                    if k in PIL.ExifTags.TAGS
-                }
+        if image._getexif() is None:
+            exif = {}
+        else:
+            exif = {
+                PIL.ExifTags.TAGS[k]: v
+                for k, v in image._getexif().items()
+                if k in PIL.ExifTags.TAGS
+            }
 
-            log = function_name + ': exif=' + str(exif)
-            logging.info(log)
+        log = function_name + ': exif=' + str(exif)
+        logging.info(log)
 
-            if 'ExposureTime' in exif:
-                if str(exif['ExposureTime']) == '0.0':
-                    shutter_speed = 'Auto"'
-                elif int(exif['ExposureTime']) == 0:
-                    shutter_speed = '1/'+str(int(1/exif['ExposureTime']))+'"'
-                else:
-                    shutter_speed = str(int(exif['ExposureTime'])) + '/1"'
+        if 'ExposureTime' in exif:
+            if str(exif['ExposureTime']) == '0.0':
+                shutter_speed = 'Auto"'
+            elif int(exif['ExposureTime']) == 0:
+                shutter_speed = '1/'+str(int(1/exif['ExposureTime']))+'"'
             else:
-                shutter_speed = ''
-            if 'ISOSpeedRatings' in exif:
-                iso = 'ISO '+str(exif['ISOSpeedRatings'])
-                if iso == 'ISO 0':
-                    iso = 'ISO Auto'
-            else:
-                iso = ''
-            self.panel_control_info_label.setText(
-                'DSCF'+str(index).zfill(4) + '.JPG\n'+str(image.width) + 'x' + str(image.height) +
-                '\n'+shutter_speed+'\n' + iso)
+                shutter_speed = str(int(exif['ExposureTime'])) + '/1"'
+        else:
+            shutter_speed = ''
+        if 'ISOSpeedRatings' in exif:
+            iso = 'ISO '+str(exif['ISOSpeedRatings'])
+            if iso == 'ISO 0':
+                iso = 'ISO Auto'
+        else:
+            iso = ''
+        self.panel_control_info_label.setText(
+            'DSCF'+str(index).zfill(4) + '.JPG\n'+str(image.width) + 'x' + str(image.height) +
+            '\n'+shutter_speed+'\n' + iso)
 
         log = function_name + ': exit'
         logging.info(log)
@@ -1067,7 +1066,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1132,7 +1131,7 @@ class CameraScreen(QMainWindow):
         3200x2400 QUXGA
         """
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1188,7 +1187,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1221,7 +1220,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1254,7 +1253,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1339,7 +1338,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1372,7 +1371,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1405,7 +1404,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1445,7 +1444,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1499,7 +1498,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1527,7 +1526,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1560,7 +1559,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1593,7 +1592,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1623,7 +1622,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1772,7 +1771,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1920,7 +1919,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1948,7 +1947,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1980,7 +1979,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -1994,6 +1993,26 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
 
+    def __on_toast(self):
+        """Hides toast
+
+        Returns:
+            bool: False
+        """
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.info(log)
+
+        self.__panel_control_stream_info_label_set_text()
+
+        log = function_name + ': result=False'
+        logging.info(log)
+
+        return False
+
+
     def __on_sync_message(self, _, message):
         """Handles sync messages that appear on the pipeline bus
 
@@ -2003,7 +2022,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
@@ -2031,6 +2050,8 @@ class CameraScreen(QMainWindow):
             self.control_shutter_button.setToolTip('Take a picture')
             self.control_shutter_button.setIcon(
                 QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.panel_control_file_info_label_set_text(self.__index)
+            GLib.timeout_add_seconds(1, self.__on_toast)
 
         log = function_name + ': exit'
         logging.info(log)
@@ -2041,19 +2062,19 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
         logging.info(log)
 
         self.source.set_property(
-			'annotation-text',
-			'CPU: ' + str(psutil.cpu_percent()) +
-			'% MEM: ' + str(psutil.virtual_memory().percent) +
-			'% TMP: ' + str(round(CPUTemperature().temperature, 1)) + 'C\n'
-			'DSK: ' + str(round(DiskUsage().usage, 1)) +
-			'% THR: ' + subprocess.check_output(
-				['vcgencmd', 'get_throttled']).decode('utf-8').replace('throttled=','').strip() +
+            'annotation-text',
+            'CPU: ' + str(psutil.cpu_percent()) +
+            '% MEM: ' + str(psutil.virtual_memory().percent) +
+            '% TMP: ' + str(round(CPUTemperature().temperature, 1)) + 'C\n'
+            'DSK: ' + str(round(DiskUsage().usage, 1)) +
+            '% THR: ' + subprocess.check_output(
+                ['vcgencmd', 'get_throttled']).decode('utf-8').replace('throttled=','').strip() +
             ' VOL: ' + subprocess.check_output(
                 ['vcgencmd', 'measure_volts']).decode('utf-8').replace('volt=','').strip() + '\n')
 
@@ -2071,7 +2092,7 @@ class CameraScreen(QMainWindow):
         """
 
         function_name = "'" + threading.currentThread().name + "'." + \
-			type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': iso=' + iso
         logging.info(log)
