@@ -83,6 +83,12 @@ class MouseGestureRecognizer(QGestureRecognizer):
         self.__timestamp = 0
         self.__startpoint = 0
         self.__endpoint = 0
+        self.__deg_0 = 0
+        self.__deg_90 = 0
+        self.__deg_180 = 0
+        self.__deg_270 = 0
+        self.__samples = 0
+        self.__trigger = False
 
         log = function_name + ': exit'
         logging.info(log)
@@ -171,32 +177,68 @@ class MouseGestureRecognizer(QGestureRecognizer):
             self.__pressed = False
             result = QGestureRecognizer.Ignore
         elif event.type() == QWheelEvent.Wheel:
+
             timestamp = time.time()
-            if timestamp - self.__timestamp < 0.7 and not self.__parent.control_menu_photo_camera \
-                or timestamp - self.__timestamp < 2 and self.__parent.control_menu_photo_camera:
-                result = QGestureRecognizer.Ignore
-            else:
+
+            if (
+                (timestamp - self.__timestamp > 2 and self.__parent.control_menu_photo_camera) or
+                (timestamp - self.__timestamp > 1 and not self.__parent.control_menu_photo_camera)):
                 self.__timestamp = timestamp
+                self.__samples = 0
+            if self.__samples < 30:
+                self.__samples = self.__samples + 1
+                self.__trigger = True
+
                 point = event.angleDelta()
                 if point.x() > 0:
-                    gesture.setSwipeAngle(0)
-                    self.__timestamp = timestamp
-                    result = QGestureRecognizer.TriggerGesture
-                elif point.x() < 0:
-                    gesture.setSwipeAngle(180)
-                    self.__timestamp = timestamp
-                    result = QGestureRecognizer.TriggerGesture
-                elif point.y() > 0:
-                    gesture.setSwipeAngle(90)
-                    self.__timestamp = timestamp
-                    result = QGestureRecognizer.TriggerGesture
-                elif point.y() < 0:
-                    gesture.setSwipeAngle(270)
-                    self.__timestamp = timestamp
-                    result = QGestureRecognizer.TriggerGesture
+                    self.__deg_0 = self.__deg_0 + 1
+                if point.x() < 0:
+                    self.__deg_180 = self.__deg_180 + 1
+                if point.y() > 0:
+                    self.__deg_90 = self.__deg_90 + 1
+                if point.y() < 0:
+                    self.__deg_270 = self.__deg_270 + 1
+
+                result = QGestureRecognizer.Ignore
+            elif self.__trigger:
+                self.__trigger = False
+
+                if self.__deg_270 > 0:
+                    x = 360
                 else:
-                    self.__timestamp = timestamp
-                    result = QGestureRecognizer.Ignore
+                    x = 0
+                if self.__deg_0 + self.__deg_90 + self.__deg_180 + self.__deg_270 == 0:
+                    deg = 0
+                else:
+                    deg = int(
+                        (x*self.__deg_0 + 90*self.__deg_90 + 180*self.__deg_180 + 270*self.__deg_270)/
+                        (self.__deg_0 + self.__deg_90 + self.__deg_180 + self.__deg_270))
+                self.__deg_0 = 0
+                self.__deg_180 = 0
+                self.__deg_90 = 0
+                self.__deg_270 = 0
+
+                if deg < 20 or deg > 340:
+                    deg = 0
+                if 25 < deg < 65:
+                    deg = 45
+                if 70 < deg < 110:
+                    deg = 90
+                if 115 < deg < 155:
+                    deg = 135
+                if 160 < deg < 200:
+                    deg = 180
+                if 205 < deg < 245:
+                    deg = 225
+                if 250 < deg < 290:
+                    deg = 270
+                if 295 < deg < 335:
+                    deg = 315
+
+                gesture.setSwipeAngle(deg)
+                result = QGestureRecognizer.TriggerGesture
+            else:
+                result = QGestureRecognizer.Ignore
         else:
             result = QGestureRecognizer.Ignore
 
@@ -2141,12 +2183,14 @@ if __name__ == '__main__':
     except FileNotFoundError:
         logging.warning("'etc/astroberry.json' not found")
 
-    with picamera.PiCamera() as camera:
-        MODEL = camera.revision
+    try:
+        with picamera.PiCamera() as camera:
+            MODEL = camera.revision
 
-    screen = CameraScreen(MODEL, CLOSE, ICON)
-    screen.setup()
-    screen.start()
-    screen.show()
-
-    sys.exit(application.exec_())
+        screen = CameraScreen(MODEL, CLOSE, ICON)
+        screen.setup()
+        screen.start()
+        screen.show()
+        sys.exit(application.exec_())
+    except picamera.exc.PiCameraMMALError:
+        logging.error('Failed to acquire the camera. Close another instance of the application')
