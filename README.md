@@ -8,7 +8,9 @@ control for shutter speed and ISO and enables shoot pictures in extremely dark c
 
 ## Dependencies
 
-This repository depends on [RaspberryPi-gst-rpicamsrc](https://github.com/raspberrypiexperiments/RaspberryPi-gst-rpicamsrc.git) repository.
+This repository depends on
+[RaspberryPi-gst-rpicamsrc](https://github.com/raspberrypiexperiments/RaspberryPi-gst-rpicamsrc.git)
+repository.
 
 ## Known supported Raspberry Pi
 
@@ -45,10 +47,6 @@ cd ..
 ```bash
 rm -rf RaspberryPi-AstroBerry
 ```
-
-## Desired Feature List
-
-* Makefile.
 
 ## License
 

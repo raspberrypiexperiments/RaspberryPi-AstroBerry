@@ -1677,7 +1677,7 @@ class CameraScreen(QMainWindow):
 
         self.__write_parameters()
 
-        shutdown()
+        os.system('sudo shutdown -h now')
 
         log = function_name + ': exit'
         logging.info(log)
@@ -2332,7 +2332,7 @@ def get_parameters(arguments):
         params = {
             'config': arguments.config,
             'icons': 'share/icons/',
-            'media': 'media/',
+            'media': arguments.media,
             'model': 'Unknown',
             'width': 800,
             'height': 608,
@@ -2371,22 +2371,6 @@ def get_parameters(arguments):
     return params
 
 
-def shutdown():
-    """Shutdown handler
-    """
-
-    function_name = "'" + threading.currentThread().name + "'." + \
-        inspect.currentframe().f_code.co_name
-
-    log = function_name + ': entry'
-    logging.info(log)
-
-    os.system('sudo shutdown -h now')
-
-    log = function_name + ': exit'
-    logging.info(log)
-
-
 
 if __name__ == '__main__':
 
@@ -2405,6 +2389,10 @@ if __name__ == '__main__':
         '-c', '--config', type=str, nargs='?', const='etc/astroberry.json',
         default='etc/astroberry.json',
         help="path to configuration file ('etc/astroberry.json' by default)")
+    parser.add_argument(
+        '-m', '--media', type=str, nargs='?', const='media/',
+        default='media/',
+        help="location of media folder ('media/' by default)")
     args = parser.parse_args()
 
     try:
