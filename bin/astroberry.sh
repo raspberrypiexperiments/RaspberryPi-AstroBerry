@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-while getopts c:m: flag
+while getopts ":c:m:e:" flag;
 do
     case "${flag}" in
         c) config=${OPTARG};;
