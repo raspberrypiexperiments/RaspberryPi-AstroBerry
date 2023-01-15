@@ -2,7 +2,9 @@
 
 ## Overview
 
-This repository provides desktop GUI for Raspberry Pi Camera. As a unique feature it delivers manual control for shutter speed and ISO and enables shoot pictures in extremely dark conditions (astrophotography).
+This repository provides desktop GUI for Raspberry Pi Camera. As a unique feature it delivers manual
+control for shutter speed and ISO and enables shoot pictures in extremely dark conditions
+(astrophotography).
 
 ## Dependencies
 
@@ -46,7 +48,6 @@ rm -rf RaspberryPi-AstroBerry
 
 ## Desired Feature List
 
-* Configuration file,
 * Makefile.
 
 ## License

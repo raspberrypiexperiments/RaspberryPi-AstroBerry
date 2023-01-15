@@ -181,8 +181,9 @@ class MouseGestureRecognizer(QGestureRecognizer):
             timestamp = time.time()
 
             if (
-                (timestamp - self.__timestamp > 2 and self.__parent.control_menu_photo_camera) or
-                (timestamp - self.__timestamp > 1 and not self.__parent.control_menu_photo_camera)):
+                (timestamp - self.__timestamp > 2 and self.__parent.parameters['photo_camera']) or
+                (timestamp - self.__timestamp > 1 and not self.__parent.parameters['photo_camera'])
+                ):
                 self.__timestamp = timestamp
                 self.__samples = 0
             if self.__samples < 30:
@@ -211,7 +212,8 @@ class MouseGestureRecognizer(QGestureRecognizer):
                     deg = 0
                 else:
                     deg = int(
-                        (x*self.__deg_0 + 90*self.__deg_90 + 180*self.__deg_180 + 270*self.__deg_270)/
+                        (x*self.__deg_0 + 90*self.__deg_90 + 180*self.__deg_180 +
+                        270*self.__deg_270)/
                         (self.__deg_0 + self.__deg_90 + self.__deg_180 + self.__deg_270))
                 self.__deg_0 = 0
                 self.__deg_180 = 0
@@ -356,12 +358,12 @@ class Display(QLabel):
         logging.info(log)
 
         if event.type() == QEvent.Gesture:
-            if self.__parent.control_menu_photo_camera:
+            if self.__parent.parameters['photo_camera']:
                 result = self.event_gesture_photo_camera(QGestureEvent(event))
             else:
                 result = self.event_gesture_photo_gallery(QGestureEvent(event))
         elif event.type() == QEvent.MouseButtonDblClick:
-            if self.__parent.control_menu_photo_camera:
+            if self.__parent.parameters['photo_camera']:
                 result = self.event_mouse_photo_camera(QMouseEvent(event))
             else:
                 result = self.event_mouse_photo_gallery(QMouseEvent(event))
@@ -456,7 +458,8 @@ class Display(QLabel):
         swipe_gesture = event.gesture(Qt.SwipeGesture)
 
         if self.__zoom:
-            pixmap = QPixmap('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
+            pixmap = QPixmap(
+                self.__parent.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
             if pixmap.width() < 640:
                 pixmap = pixmap.scaled(640,480)
             else:
@@ -488,9 +491,10 @@ class Display(QLabel):
                     y = pixmap.height() - 480
             self.setPixmap(pixmap.copy(x, y, 640, 480))
         else:
-            images = glob.glob('media/DSCF????.JPG')
+            images = glob.glob(self.__parent.parameters['media'] + 'DSCF????.JPG')
             images.sort()
-            index = images.index('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
+            index = images.index(
+                self.__parent.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
             if swipe_gesture.horizontalDirection() == QSwipeGesture.Left:
                 if index + 1 == len(images):
                     index = 0
@@ -503,7 +507,8 @@ class Display(QLabel):
                     index = index - 1
             self.__index = int(re.search(r'\d+',images[index]).group())
             self.__parent.panel_control_file_info_label_set_text(self.__index)
-            pixmap = QPixmap('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
+            pixmap = QPixmap(
+                self.__parent.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
             self.setPixmap(pixmap.scaled(640,480))
 
         log = function_name + ': result=True'
@@ -529,7 +534,8 @@ class Display(QLabel):
         logging.info(log)
 
         if event.type() == QMouseEvent.MouseButtonDblClick:
-            pixmap = QPixmap('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
+            pixmap = QPixmap(
+                self.__parent.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
             if not self.__zoom:
                 self.__zoom = True
                 if pixmap.width() < 640:
@@ -571,12 +577,12 @@ class CameraScreen(QMainWindow):
     """
 
 
-    def __init__(self, model = None, close_handler = None, icon_path = None):
+    def __init__(self, parent, params):
         """Initialize Camera Screen
 
         Args:
-            parent (_type_, optional): _description_. Defaults to None.
-            application (_type_, optional): _description_. Defaults to None.
+            parent (QApplication): application
+            params (dict): parameters
         """
 
         super().__init__(None)
@@ -587,12 +593,13 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        self.__model = model
+        self.__parent = parent
+        self.parameters = params
 
         self.setGeometry(0,36,800,564)
         self.setWindowTitle('AstroBerry')
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setWindowIcon(QIcon('share/icons/astroberry_logo.svg'))
+        self.setWindowIcon(QIcon(self.parameters['icons'] + 'astroberry_logo.svg'))
 
         self.window = QWidget()
 
@@ -658,12 +665,14 @@ class CameraScreen(QMainWindow):
         self.panel_control_contrast_button_down.setFixedSize(80,80)
         self.panel_control_contrast_button_down.setToolTip('Decrease contrast')
         self.panel_control_contrast_button_down.setIcon(QIcon(
-            'share/icons/do_not_disturb_on_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'do_not_disturb_on_FILL0_wght400_GRAD0_opsz48.svg'))
         self.panel_control_contrast_button_down.setIconSize(QSize(80,80))
         self.panel_control_contrast_button_down.clicked.connect(
             self.__on_panel_control_contrast_button_down_clicked)
+        if self.parameters['contrast'] == -100:
+            self.panel_control_contrast_button_down.setEnabled(False)
 
-        self.panel_control_contrast_label = QLabel('0')
+        self.panel_control_contrast_label = QLabel(str(self.parameters['contrast']))
         self.panel_control_contrast_label.setFixedSize(40,80)
         self.panel_control_contrast_label.setToolTip('Current contrast')
         font = self.panel_control_contrast_label.font()
@@ -675,17 +684,18 @@ class CameraScreen(QMainWindow):
         self.panel_control_contrast_button_up.setFixedSize(80,80)
         self.panel_control_contrast_button_up.setToolTip('Increase contrast')
         self.panel_control_contrast_button_up.setIcon(QIcon(
-            'share/icons/add_circle_FILL1_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'add_circle_FILL1_wght400_GRAD0_opsz48.svg'))
         self.panel_control_contrast_button_up.setIconSize(QSize(80,80))
         self.panel_control_contrast_button_up.clicked.connect(
             self.__on_panel_control_contrast_button_up_clicked)
-
+        if self.parameters['contrast'] == 100:
+            self.panel_control_contrast_button_up.setEnabled(False)
 
         self.panel_control_white_balance_button = QPushButton()
         self.panel_control_white_balance_button.setFixedSize(80,80)
         self.panel_control_white_balance_button.setToolTip('Auto white balance mode')
         self.panel_control_white_balance_button.setIcon(QIcon(
-            'share/icons/wb_auto_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'wb_auto_FILL0_wght400_GRAD0_opsz48.svg'))
         self.panel_control_white_balance_button.setIconSize(QSize(80,80))
         self.panel_control_white_balance_button.clicked.connect(
             self.__on_panel_control_white_balance_button_clicked)
@@ -694,12 +704,14 @@ class CameraScreen(QMainWindow):
         self.panel_control_saturation_button_down.setFixedSize(80,80)
         self.panel_control_saturation_button_down.setToolTip('Decrease saturation')
         self.panel_control_saturation_button_down.setIcon(QIcon(
-            'share/icons/do_not_disturb_on_FILL1_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'do_not_disturb_on_FILL1_wght400_GRAD0_opsz48.svg'))
         self.panel_control_saturation_button_down.setIconSize(QSize(80,80))
         self.panel_control_saturation_button_down.clicked.connect(
             self.__on_panel_control_saturation_button_down_clicked)
+        if self.parameters['saturation'] == -100:
+            self.panel_control_saturation_button_down.setEnabled(False)
 
-        self.panel_control_saturation_label = QLabel('0')
+        self.panel_control_saturation_label = QLabel(str(self.parameters['saturation']))
         self.panel_control_saturation_label.setFixedSize(40,80)
         self.panel_control_saturation_label.setToolTip('Current saturation')
         font = self.panel_control_saturation_label.font()
@@ -711,10 +723,12 @@ class CameraScreen(QMainWindow):
         self.panel_control_saturation_button_up.setFixedSize(80,80)
         self.panel_control_saturation_button_up.setToolTip('Increase saturation')
         self.panel_control_saturation_button_up.setIcon(QIcon(
-            'share/icons/add_circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'add_circle_FILL0_wght400_GRAD0_opsz48.svg'))
         self.panel_control_saturation_button_up.setIconSize(QSize(80,80))
         self.panel_control_saturation_button_up.clicked.connect(
             self.__on_panel_control_saturation_button_up_clicked)
+        if self.parameters['saturation'] == 100:
+            self.panel_control_saturation_button_up.setEnabled(False)
 
         self.panel_control_info_label = QLabel()
         self.panel_control_info_label.setFixedSize(160,80)
@@ -740,39 +754,39 @@ class CameraScreen(QMainWindow):
 
         self.panel.setLayout(panel_v_layout)
 
-        if icon_path is None:
-            icon_path = 'share/icons/analytics_FILL0_wght400_GRAD0_opsz48.svg'
-
-        if close_handler is None:
-            close_handler = self.__on_control_menu_debug_mode_button_clicked
+        if self.parameters['exit_action'] == 'NONE':
+            exit_handler = self.__on_control_menu_debug_mode_button_clicked
             tooltip = 'Toggle debug mode'
-        else:
-            tooltip = 'Close AstroBerry'
+        elif self.parameters['exit_action'] == 'QUIT':
+            exit_handler = self.__on_control_menu_quit_button_clicked
+            tooltip = 'Quit AstroBerry'
+        elif self.parameters['exit_action'] == 'SHUTDOWN':
+            exit_handler = self.__on_control_menu_shutdown_button_clicked
+            tooltip = 'Shutdown AstroBerry'
 
-        self.control_menu_close_button = QPushButton()
-        self.control_menu_close_button.setFixedSize(80,80)
-        self.control_menu_close_button.setToolTip(tooltip)
-        self.control_menu_close_button.setIcon(QIcon(icon_path))
-        self.control_menu_close_button.setIconSize(QSize(80,80))
-        self.control_menu_close_button.clicked.connect(close_handler)
+        self.control_menu_exit_button = QPushButton()
+        self.control_menu_exit_button.setFixedSize(80,80)
+        self.control_menu_exit_button.setToolTip(tooltip)
+        self.control_menu_exit_button.setIcon(
+            QIcon(self.parameters['icons'] + self.parameters['exit_icon']))
+        self.control_menu_exit_button.setIconSize(QSize(80,80))
+        self.control_menu_exit_button.clicked.connect(exit_handler)
 
         self.control_menu_photo_gallery_button = QPushButton()
         self.control_menu_photo_gallery_button.setFixedSize(80,80)
         self.control_menu_photo_gallery_button.setToolTip('Photo gallery')
         self.control_menu_photo_gallery_button.setIcon(QIcon(
-            'share/icons/photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_menu_photo_gallery_button.setIconSize(QSize(80,80))
         self.control_menu_photo_gallery_button.clicked.connect(
             self.__on_control_menu_photo_gallery_button_clicked)
 
-        self.control_menu_photo_camera = True
-
         control_menu_h_layout.addWidget(self.control_menu_photo_gallery_button)
-        control_menu_h_layout.addWidget(self.control_menu_close_button)
+        control_menu_h_layout.addWidget(self.control_menu_exit_button)
 
         self.control_menu.setLayout(control_menu_h_layout)
 
-        self.control_sharpness_label = QLabel('0')
+        self.control_sharpness_label = QLabel(str(self.parameters['sharpness']))
         self.control_sharpness_label.setFixedSize(160,40)
         self.control_sharpness_label.setToolTip('Current sharpness')
         font = self.control_sharpness_label.font()
@@ -784,19 +798,23 @@ class CameraScreen(QMainWindow):
         self.control_sharpness_button_down.setFixedSize(80,80)
         self.control_sharpness_button_down.setToolTip('Decrease sharpness')
         self.control_sharpness_button_down.setIcon(QIcon(
-            'share/icons/do_not_disturb_on_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'do_not_disturb_on_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_sharpness_button_down.setIconSize(QSize(80,80))
         self.control_sharpness_button_down.clicked.connect(
             self.__on_control_sharpness_button_down_clicked)
+        if self.parameters['sharpness'] == -100:
+            self.control_sharpness_button_down.setEnabled(False)
 
         self.control_sharpness_button_up = QPushButton()
         self.control_sharpness_button_up.setFixedSize(80,80)
         self.control_sharpness_button_up.setToolTip('Increase sharpness')
         self.control_sharpness_button_up.setIcon(QIcon(
-            'share/icons/add_circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'add_circle_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_sharpness_button_up.setIconSize(QSize(80,80))
         self.control_sharpness_button_up.clicked.connect(
             self.__on_control_sharpness_button_up_clicked)
+        if self.parameters['sharpness'] == 100:
+            self.control_sharpness_button_up.setEnabled(False)
 
         control_sharpness_button_h_layout.addWidget(self.control_sharpness_button_down)
         control_sharpness_button_h_layout.addWidget(self.control_sharpness_button_up)
@@ -814,13 +832,22 @@ class CameraScreen(QMainWindow):
         self.control_exposure_shutter_speed_button_down.setToolTip(
             'Decrease shutter speed')
         self.control_exposure_shutter_speed_button_down.setIcon(QIcon(
-            'share/icons/indeterminate_check_box_FILL1_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'indeterminate_check_box_FILL1_wght400_GRAD0_opsz48.svg'))
         self.control_exposure_shutter_speed_button_down.setIconSize(QSize(80,80))
         self.control_exposure_shutter_speed_button_down.clicked.connect(
             self.__on_control_exposure_shutter_speed_button_down_clicked)
-        self.control_exposure_shutter_speed_button_down.setEnabled(False)
 
-        self.control_exposure_shutter_speed_label = QLabel('Auto"')
+        if parameters['shutter_speed'] == 0:
+            shutter_speed = 'Auto'
+            self.control_exposure_shutter_speed_button_down.setEnabled(False)
+        else:
+            exposure_time = parameters['shutter_speed'] / 1000000
+            if int(exposure_time) == 0:
+                shutter_speed = '1/'+str(int(1/exposure_time))
+            else:
+                shutter_speed = str(int(exposure_time)) + '/1'
+
+        self.control_exposure_shutter_speed_label = QLabel(shutter_speed + '"')
         self.control_exposure_shutter_speed_label.setFixedSize(80,40)
         self.control_exposure_shutter_speed_label.setToolTip('Current shutter speed')
         font = self.control_exposure_shutter_speed_label.font()
@@ -833,10 +860,12 @@ class CameraScreen(QMainWindow):
         self.control_exposure_shutter_speed_button_up.setToolTip(
             'Increase shutter speed')
         self.control_exposure_shutter_speed_button_up.setIcon(QIcon(
-            'share/icons/add_box_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'add_box_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_exposure_shutter_speed_button_up.setIconSize(QSize(80,80))
         self.control_exposure_shutter_speed_button_up.clicked.connect(
             self.__on_control_exposure_shutter_speed_button_up_clicked)
+        if parameters['shutter_speed'] == 22000000:
+            self.control_exposure_shutter_speed_button_up.setEnabled(False)
 
         control_exposure_shutter_speed_v_layout.addWidget(
             self.control_exposure_shutter_speed_button_up)
@@ -852,13 +881,18 @@ class CameraScreen(QMainWindow):
         self.control_exposure_iso_button_down.setFixedSize(80,80)
         self.control_exposure_iso_button_down.setToolTip('Decrease ISO')
         self.control_exposure_iso_button_down.setIcon(QIcon(
-            'share/icons/indeterminate_check_box_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'indeterminate_check_box_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_exposure_iso_button_down.setIconSize(QSize(90,90))
         self.control_exposure_iso_button_down.clicked.connect(
             self.__on_control_exposure_iso_button_down_clicked)
-        self.control_exposure_iso_button_down.setEnabled(False)
 
-        self.control_exposure_iso_label = QLabel("ISO Auto")
+        if parameters['iso'] == 0:
+            iso = 'Auto'
+            self.control_exposure_iso_button_down.setEnabled(False)
+        else:
+            iso = str(int(parameters['iso']*100/256))
+
+        self.control_exposure_iso_label = QLabel('ISO ' + iso)
         self.control_exposure_iso_label.setFixedSize(80,40)
         self.control_exposure_iso_label.setToolTip('Current ISO')
         font = self.control_exposure_iso_label.font()
@@ -870,10 +904,12 @@ class CameraScreen(QMainWindow):
         self.control_exposure_iso_button_up.setFixedSize(80,80)
         self.control_exposure_iso_button_up.setToolTip('Increase ISO')
         self.control_exposure_iso_button_up.setIcon(QIcon(
-            'share/icons/add_box_FILL1_wght400_GRAD0_opsz48.svg'))
+            self.parameters['icons'] + 'add_box_FILL1_wght400_GRAD0_opsz48.svg'))
         self.control_exposure_iso_button_up.setIconSize(QSize(80,80))
         self.control_exposure_iso_button_up.clicked.connect(
             self.__on_control_exposure_iso_button_up_clicked)
+        if parameters['iso'] == 4096:
+            self.control_exposure_iso_button_up.setEnabled(False)
 
         control_exposure_iso_v_layout.addWidget(self.control_exposure_iso_button_up)
         control_exposure_iso_v_layout.addWidget(self.control_exposure_iso_label)
@@ -894,7 +930,7 @@ class CameraScreen(QMainWindow):
         self.control_shutter_button.setFixedSize(160,160)
         self.control_shutter_button.setToolTip('Take a picture')
         self.control_shutter_button.setIcon(
-            QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+            QIcon(self.parameters['icons'] + 'circle_FILL0_wght400_GRAD0_opsz48.svg'))
         self.control_shutter_button.setIconSize(QSize(160,160))
         self.control_shutter_button.clicked.connect(self.__on_control_shutter_button_clicked)
 
@@ -910,7 +946,7 @@ class CameraScreen(QMainWindow):
         self.window.setLayout(window_h_layout)
         self.setCentralWidget(self.window)
 
-        images = glob.glob('media/DSCF????.JPG')
+        images = glob.glob(self.parameters['media'] + 'DSCF????.JPG')
         images.sort()
         if len(images) == 0:
             self.__index = -1
@@ -944,26 +980,75 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        self.__capturing_contrast = 'normal'
-        self.__capturing_white_balance = 'auto'
-        self.__capturing_saturation = 'normal'
-        self.__capturing_sharpness = 'normal'
-        self.__capturing_shutter_speed = '0/1'
+        if self.parameters['contrast'] == 0:
+            self.__capturing_contrast = 'normal'
+        elif self.parameters['contrast'] < 0:
+            self.__capturing_contrast = 'soft'
+        elif self.parameters['contrast'] > 0:
+            self.__capturing_contrast = 'hard'
+        if self.parameters['white_balance'] == 1:
+            self.__capturing_white_balance = 'daylight'
+        elif self.parameters['white_balance'] == 2:
+            self.__capturing_white_balance = 'cloudy'
+        elif self.parameters['white_balance'] == 3:
+            self.__capturing_white_balance = 'manual'
+        elif self.parameters['white_balance'] == 4:
+            self.__capturing_white_balance = 'tungsten'
+        elif self.parameters['white_balance'] == 5:
+            self.__capturing_white_balance = 'fluorescent'
+        elif self.parameters['white_balance'] == 6:
+            self.__capturing_white_balance = '"fluorescent h"'
+        elif self.parameters['white_balance'] == 7:
+            self.__capturing_white_balance = 'flash'
+        elif self.parameters['white_balance'] == 8:
+            self.__capturing_white_balance = 'manual'
+        elif self.parameters['white_balance'] == 9:
+            self.__capturing_white_balance = 'auto'
+        if self.parameters['saturation'] == 0:
+            self.__capturing_saturation = 'normal'
+        elif self.parameters['saturation'] < 0:
+            self.__capturing_saturation = 'low-saturation'
+        elif self.parameters['saturation'] > 0:
+            self.__capturing_saturation = 'high-saturation'
+        if self.parameters['sharpness'] == 0:
+            self.__capturing_sharpness = 'normal'
+        elif self.parameters['sharpness'] < 0:
+            self.__capturing_sharpness = 'soft'
+        elif self.parameters['sharpness'] > 0:
+            self.__capturing_sharpness = 'hard'
+        if parameters['shutter_speed'] == 0:
+            self.__capturing_shutter_speed = '0/1'
+        else:
+            exposure_time = parameters['shutter_speed'] / 1000000
+            if int(exposure_time) == 0:
+                self.__capturing_shutter_speed = '1/'+str(int(1/exposure_time))
+            else:
+                self.__capturing_shutter_speed = str(int(exposure_time)) + '/1'
+
         self.__pipeline = Gst.parse_launch(
             'rpicamsrc name=source preview=false fullscreen=false ' +
-            'sensor-mode=3 annotation-text-size=38 ! capsfilter name=source-caps ' +
-            'caps=video/x-raw,width=800,height=608 ' +
-            '! tee name=t ! queue ! videoconvert ! videoscale ' +
-            '! video/x-raw,width=640,height=480 ' +
-            '! autovideosink sync=false t. ! queue ! jpegenc quality=100 ' +
-            '! taginject name=exif tags="capturing-source=dsc,capturing-contrast=' +
-            self.__capturing_contrast + ',capturing-white-balance=' +
-            self.__capturing_white_balance + ',capturing-sharpness=' +
-            self.__capturing_sharpness + ',capturing-saturation=' +
-            self.__capturing_saturation + ',capturing-shutter-speed=' +
-            self.__capturing_shutter_speed + ',capturing-iso-speed=0" ' +
-            '! jifmux name=setter ' +
-            '! multifilesink name=filesink post-messages=true sync=false ' +
+            'sensor-mode=3 annotation-text-size=38' +
+            ' annotation-mode=' + str(self.parameters['annotation_mode']) +
+            ' sharpness=' + str(self.parameters['sharpness']) +
+            ' shutter-speed=' + str(self.parameters['shutter_speed']) +
+            ' analog-gain=' + str(self.parameters['iso']) +
+            ' contrast=' + str(self.parameters['contrast']) +
+            ' awb-mode=' + str(self.parameters['white_balance']) +
+            ' saturation=' + str(self.parameters['saturation']) +
+            ' ! capsfilter name=source-caps caps=video/x-raw' +
+            ',width=' + str(self.parameters['width']) +
+            ',height=' + str(self.parameters['height']) +
+            ' ! tee name=t ! queue ! videoconvert ! videoscale' +
+            ' ! video/x-raw,width=640,height=480' +
+            ' ! autovideosink sync=false t. ! queue ! jpegenc quality=100' +
+            ' ! taginject name=exif tags="capturing-source=dsc' +
+            ',capturing-contrast=' + self.__capturing_contrast +
+            ',capturing-white-balance=' + self.__capturing_white_balance +
+            ',capturing-sharpness=' + self.__capturing_sharpness +
+            ',capturing-saturation=' + self.__capturing_saturation +
+            ',capturing-shutter-speed=' + self.__capturing_shutter_speed +
+            ',capturing-iso-speed=0" ! jifmux name=setter' +
+            ' ! multifilesink name=filesink post-messages=true sync=false ' +
             'max-files=1 location=' + tempfile.gettempdir() + '/DSCFTEMP.JPG')
         self.source = self.__pipeline.get_by_name('source')
         self.__source_caps = self.__pipeline.get_by_name('source-caps')
@@ -996,6 +1081,15 @@ class CameraScreen(QMainWindow):
 
         GLib.timeout_add_seconds(1, self.__on_stats)
 
+        parameters['photo_camera'] = not parameters['photo_camera']
+        self.__on_control_menu_photo_gallery_button_clicked()
+
+        awb_mode = self.source.get_property('awb-mode') - 1
+        if awb_mode <= 0:
+            awb_mode = 9
+        self.source.set_property('awb-mode', awb_mode)
+        self.__on_panel_control_white_balance_button_clicked()
+
         log = function_name + ': exit'
         logging.info(log)
 
@@ -1013,7 +1107,7 @@ class CameraScreen(QMainWindow):
         log = function_name + ': index=' + str(index)
         logging.info(log)
 
-        image = PIL.Image.open('media/DSCF'+str(index).zfill(4)+'.JPG')
+        image = PIL.Image.open(self.parameters['media'] + 'DSCF'+str(index).zfill(4)+'.JPG')
 
         if image._getexif() is None:
             exif = {}
@@ -1267,63 +1361,63 @@ class CameraScreen(QMainWindow):
             self.panel_control_white_balance_button.setToolTip(
                 'Sunlight white balance mode')
             self.panel_control_white_balance_button.setIcon(
-                QIcon('share/icons/wb_sunny_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'wb_sunny_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 2)
             self.__capturing_white_balance = 'daylight'
         elif awb_mode == 2:
             self.panel_control_white_balance_button.setToolTip(
                 'Cloudy white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/cloudy_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'cloudy_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 3)
             self.__capturing_white_balance = 'cloudy'
         elif awb_mode == 3:
             self.panel_control_white_balance_button.setToolTip(
                 'Shade white balance mode')
             self.panel_control_white_balance_button.setIcon(
-                QIcon('share/icons/wb_shade_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'wb_shade_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 4)
             self.__capturing_white_balance = 'manual'
         elif awb_mode == 4:
             self.panel_control_white_balance_button.setToolTip(
                 'Tungsten white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/emoji_objects_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'emoji_objects_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 5)
             self.__capturing_white_balance = 'tungsten'
         elif awb_mode == 5:
             self.panel_control_white_balance_button.setToolTip(
                 'Fluorescent white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/fluorescent_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'fluorescent_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 6)
             self.__capturing_white_balance = 'fluorescent'
         elif awb_mode == 6:
             self.panel_control_white_balance_button.setToolTip(
                 'Incadescent white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/wb_incandescent_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'wb_incandescent_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 7)
             self.__capturing_white_balance = '"fluorescent h"'
         elif awb_mode == 7:
             self.panel_control_white_balance_button.setToolTip(
                 'Flash white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/flash_on_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'flash_on_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 8)
             self.__capturing_white_balance = 'flash'
         elif awb_mode == 8:
             self.panel_control_white_balance_button.setToolTip(
                 'Horizon white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/wb_twilight_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'wb_twilight_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 9)
             self.__capturing_white_balance = 'manual'
         elif awb_mode == 9:
             self.panel_control_white_balance_button.setToolTip(
                 'Auto white balance mode')
             self.panel_control_white_balance_button.setIcon(QIcon(
-                'share/icons/wb_auto_FILL0_wght400_GRAD0_opsz48.svg'))
+                self.parameters['icons'] + 'wb_auto_FILL0_wght400_GRAD0_opsz48.svg'))
             self.source.set_property('awb-mode', 1)
             self.__capturing_white_balance = 'auto'
 
@@ -1409,16 +1503,16 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        if not self.control_menu_photo_camera:
+        if not self.parameters['photo_camera']:
             self.__index = self.panel_display.get_index()
-        images = glob.glob('media/DSCF????.JPG')
+        images = glob.glob(self.parameters['media'] + 'DSCF????.JPG')
         images.sort()
-        index = images.index('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
-        if path.exists('media/DSCF'+str(self.__index).zfill(4)+'.JPG'):
-            os.remove('media/DSCF'+str(self.__index).zfill(4)+'.JPG')
+        index = images.index(self.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
+        if path.exists(self.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG'):
+            os.remove(self.parameters['media'] + 'DSCF'+str(self.__index).zfill(4)+'.JPG')
         if len(images) == 1:
             self.__index = -1
-            if not self.control_menu_photo_camera:
+            if not self.parameters['photo_camera']:
                 self.panel_display.set_index(self.__index)
                 self.__on_control_menu_photo_gallery_button_clicked()
             self.control_menu_photo_gallery_button.setEnabled(False)
@@ -1428,9 +1522,10 @@ class CameraScreen(QMainWindow):
             else:
                 index = index + 1
             self.__index = int(re.search(r'\d+', images[index]).group())
-            if not self.control_menu_photo_camera:
-                self.panel_display.setPixmap(
-                    QPixmap('media/DSCF' + str(self.__index).zfill(4) + '.JPG').scaled(640,480))
+            if not self.parameters['photo_camera']:
+                self.panel_display.setPixmap(QPixmap(
+                    self.parameters['media'] + 'DSCF' + str(self.__index).zfill(4) +
+                    '.JPG').scaled(640,480))
                 self.panel_display.set_index(self.__index)
                 self.panel_display.set_zoom(False)
             self.panel_control_file_info_label_set_text(self.__index)
@@ -1449,21 +1544,22 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        if self.control_menu_photo_camera:
-            self.control_menu_photo_camera = False
+        if self.parameters['photo_camera']:
+            self.parameters['photo_camera'] = False
             self.__pipeline.set_state(Gst.State.NULL)
             self.panel_display.setToolTip(
                 'Swipe left or right to select an image or double tap to zoom in')
             self.control_menu_photo_gallery_button.setToolTip('Photo camera')
             self.control_menu_photo_gallery_button.setIcon(
-                QIcon('share/icons/photo_camera_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'photo_camera_FILL0_wght400_GRAD0_opsz48.svg'))
 
             self.panel_display.setPixmap(
-                QPixmap('media/DSCF'+str(self.__index).zfill(4)+'.JPG').scaled(640,480))
+                QPixmap(self.parameters['media'] + 'DSCF' + str(self.__index).zfill(4) +
+                '.JPG').scaled(640,480))
             self.panel_display.set_index(self.__index)
             self.panel_display.set_zoom(False)
             self.control_shutter_button.setIcon(
-                QIcon('share/icons/delete_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'delete_FILL0_wght400_GRAD0_opsz48.svg'))
             self.control_shutter_button.setToolTip('Delete a image')
             CameraScreen.reconnect(
                 self.control_shutter_button.clicked,
@@ -1471,17 +1567,17 @@ class CameraScreen(QMainWindow):
                 self.__on_panel_control_delete_button_clicked)
             self.panel_control_file_info_label_set_text(self.__index)
         else:
-            self.control_menu_photo_camera = True
+            self.parameters['photo_camera'] = True
             self.__pipeline.set_state(Gst.State.PLAYING)
             self.__set_exif(str(int(self.source.get_property('analog-gain')*100/256)))
             self.panel_display.setToolTip(
                 'Swipe left or right to change resolution or double tap to toggle debug mode')
             self.control_menu_photo_gallery_button.setToolTip('Photo gallery')
             self.control_menu_photo_gallery_button.setIcon(
-                QIcon('share/icons/photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'photo_library_FILL0_wght400_GRAD0_opsz48.svg'))
             self.__index = self.panel_display.get_index()
             self.control_shutter_button.setIcon(
-                QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'circle_FILL0_wght400_GRAD0_opsz48.svg'))
             self.control_shutter_button.setToolTip('Take a picture')
             CameraScreen.reconnect(
                 self.control_shutter_button.clicked,
@@ -1510,14 +1606,80 @@ class CameraScreen(QMainWindow):
 
         if annotation_mode == 0x00000000:
             self.source.set_property('annotation-mode', 0x0000065D)
-            self.control_menu_close_button.setIcon(
-                QIcon('share/icons/analytics_FILL1_wght400_GRAD0_opsz48.svg'))
+            self.control_menu_exit_button.setIcon(
+                QIcon(self.parameters['icons'] + 'analytics_FILL1_wght400_GRAD0_opsz48.svg'))
         else:
             self.source.set_property('annotation-mode', 0x00000000)
-            self.control_menu_close_button.setIcon(
-                QIcon('share/icons/analytics_FILL0_wght400_GRAD0_opsz48.svg'))
+            self.control_menu_exit_button.setIcon(
+                QIcon(self.parameters['icons'] + 'analytics_FILL0_wght400_GRAD0_opsz48.svg'))
+
+        log = function_name + ': exit'
+        logging.info(log)
+
+
+    def __write_parameters(self):
+        """Saves parameters to the config file
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
         log = function_name + ': entry'
+        logging.info(log)
+
+        structure = self.__source_caps.get_property('caps').get_structure(0)
+
+        self.parameters['width'] = structure.get_value('width')
+        self.parameters['height'] = structure.get_value('height')
+        self.parameters['sharpness'] = self.source.get_property('sharpness')
+        self.parameters['shutter_speed'] = self.source.get_property('shutter-speed')
+        self.parameters['iso'] = self.source.get_property('analog-gain')
+        self.parameters['contrast'] = self.source.get_property('contrast')
+        self.parameters['white_balance'] = self.source.get_property('awb-mode')
+        self.parameters['saturation'] = self.source.get_property('saturation')
+        self.parameters['annotation_mode'] = self.source.get_property('annotation-mode')
+
+        with open(self.parameters['config'], 'w') as config:
+            config.write(json.dumps(self.parameters))
+        os.sync()
+
+        log = function_name + ': exit'
+        logging.info(log)
+
+
+    def __on_control_menu_quit_button_clicked(self):
+        """Closes the application
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.info(log)
+
+        self.__write_parameters()
+
+        self.__parent.quit()
+
+        log = function_name + ': exit'
+        logging.info(log)
+
+
+    def __on_control_menu_shutdown_button_clicked(self):
+        """Closes the application
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.info(log)
+
+        self.__write_parameters()
+
+        shutdown()
+
+        log = function_name + ': exit'
         logging.info(log)
 
 
@@ -1598,19 +1760,26 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
 
-        if self.control_menu_photo_camera:
+        if self.parameters['photo_camera']:
             structure = self.__source_caps.get_property('caps').get_structure(0)
-            if self.__capturing_shutter_speed == '0/1':
+
+            exposure_time = self.source.get_property('shutter-speed')
+            if exposure_time == 0:
                 shutter_speed = 'Auto'
             else:
-                shutter_speed = self.__capturing_shutter_speed
+                exposure_time = exposure_time / 1000000
+                if int(exposure_time) == 0:
+                    shutter_speed = '1/' + str(int(1/exposure_time))
+                else:
+                    shutter_speed = str(int(exposure_time)) + '/1'
+
             analog_gain = self.source.get_property('analog-gain')
             if analog_gain == 0:
                 iso = 'Auto'
             else:
                 iso = str(int(analog_gain*100/256))
             self.panel_control_info_label.setText(
-                self.__model + '\n' + str(structure.get_value('width')) + 'x' +
+                self.parameters['model'] + '\n' + str(structure.get_value('width')) + 'x' +
                 str(structure.get_value('height')) + '\n' + shutter_speed + '"\nISO ' + iso)
 
         log = function_name + ': exit'
@@ -1715,7 +1884,7 @@ class CameraScreen(QMainWindow):
         elif shutter_speed < 111111:
             shutter_speed = 111111
             self.__capturing_shutter_speed = '1/9'
-            if self.control_menu_photo_camera:
+            if self.parameters['photo_camera']:
                 self.__pipeline.set_state(Gst.State.NULL)
                 self.__pipeline.set_state(Gst.State.PLAYING)
         elif shutter_speed < 125000:
@@ -1746,7 +1915,7 @@ class CameraScreen(QMainWindow):
             shutter_speed = shutter_speed + 1000000
             self.__capturing_shutter_speed = \
                 str(int(shutter_speed/1000000)) + '/1'
-            if shutter_speed in (2000000, 7000000) and self.control_menu_photo_camera:
+            if shutter_speed in (2000000, 7000000) and self.parameters['photo_camera']:
                 self.__pipeline.set_state(Gst.State.NULL)
                 self.__pipeline.set_state(Gst.State.PLAYING)
         else:
@@ -1781,7 +1950,7 @@ class CameraScreen(QMainWindow):
             shutter_speed = shutter_speed - 1000000
             self.__capturing_shutter_speed = str(
                 int(shutter_speed/1000000)) + '/1'
-            if shutter_speed in (1000000, 6000000) and self.control_menu_photo_camera:
+            if shutter_speed in (1000000, 6000000) and self.parameters['photo_camera']:
                 self.__pipeline.set_state(Gst.State.NULL)
                 self.__pipeline.set_state(Gst.State.PLAYING)
         elif shutter_speed > 500000:
@@ -1987,7 +2156,7 @@ class CameraScreen(QMainWindow):
         self.__shutter_clicked = True
         self.control_shutter_button.setToolTip('Taking a picture')
         self.control_shutter_button.setIcon(
-            QIcon('share/icons/circle_FILL1_wght400_GRAD0_opsz48.svg'))
+            QIcon(self.parameters['icons'] + 'circle_FILL1_wght400_GRAD0_opsz48.svg'))
 
         log = function_name + ': exit'
         logging.info(log)
@@ -2031,7 +2200,7 @@ class CameraScreen(QMainWindow):
         if name == 'prepare-window-handle':
             message.src.set_window_handle(self.__win_id)
         if name == 'GstMultiFileSink' and self.__shutter_clicked:
-            images = glob.glob('media/DSCF????.JPG')
+            images = glob.glob(self.parameters['media'] + 'DSCF????.JPG')
             images.sort()
             if len(images) == 0:
                 self.__index = 0
@@ -2043,13 +2212,13 @@ class CameraScreen(QMainWindow):
 
             shutil.copyfile(
                 self.__filesink.get_property("location"),
-                'media/DSCF'+str(self.__index).zfill(4) + '.JPG')
+                self.parameters['media'] + 'DSCF'+str(self.__index).zfill(4) + '.JPG')
             self.panel_display.set_index(self.__index)
             self.control_menu_photo_gallery_button.setEnabled(True)
             self.__shutter_clicked = False
             self.control_shutter_button.setToolTip('Take a picture')
             self.control_shutter_button.setIcon(
-                QIcon('share/icons/circle_FILL0_wght400_GRAD0_opsz48.svg'))
+                QIcon(self.parameters['icons'] + 'circle_FILL0_wght400_GRAD0_opsz48.svg'))
             self.panel_control_file_info_label_set_text(self.__index)
             GLib.timeout_add_seconds(1, self.__on_toast)
 
@@ -2140,6 +2309,68 @@ class CameraScreen(QMainWindow):
         logging.info(log)
 
 
+
+def get_parameters(arguments):
+    """Gets parameters
+
+    Returns:
+        dict: params
+    """
+
+    function_name = "'" + threading.currentThread().name + "'." + \
+        inspect.currentframe().f_code.co_name
+
+    log = function_name + ': arguments=' + str(arguments)
+    logging.info(log)
+
+    try:
+        with open(arguments.config, 'r') as config:
+            params = json.load(config)
+    except FileNotFoundError:
+        log = "'" + arguments.config + "' not found"
+        logging.warning(log)
+        params = {
+            'config': arguments.config,
+            'icons': 'share/icons/',
+            'media': 'media/',
+            'model': 'Unknown',
+            'width': 800,
+            'height': 608,
+            'sharpness': 0,
+            'contrast': 0,
+            'white_balance': 1,
+            'saturation': 0,
+            'shutter_speed': 0,
+            'iso': 0,
+            'annotation_mode': 0x00000000,
+            'photo_camera': True,
+            'exit_action': 'QUIT',
+            'exit_icon': 'close_FILL0_wght400_GRAD0_opsz48.svg'
+        }
+        with open(params['config'], 'w') as config:
+            config.write(json.dumps(params))
+        os.sync()
+
+    if args.exit.upper() == 'QUIT':
+        params['exit_action'] = 'QUIT'
+        params['exit_icon'] = 'close_FILL0_wght400_GRAD0_opsz48.svg'
+    elif args.exit.upper() == 'SHUTDOWN':
+        params['exit_action'] = 'SHUTDOWN'
+        params['exit_icon'] = 'power_settings_new_FILL0_wght400_GRAD0_opsz48.svg'
+    elif args.exit.upper() == 'NONE':
+        params['exit_action'] = 'NONE'
+        params['exit_icon'] = 'analytics_FILL0_wght400_GRAD0_opsz48.svg'
+    else:
+        parser.print_help()
+        sys.exit()
+
+    log = function_name + ': result=' + str(params)
+    logging.info(log)
+
+
+    return params
+
+
 def shutdown():
     """Shutdown handler
     """
@@ -2166,11 +2397,14 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
         '-d', '--debug', type=str, nargs='?', const='DEBUG', default='WARNING',
-        help="enable debug level (DEBUG by default): NOTSET, DEBUG, INFO, "
-        "WARNING, ERROR, CRITICAL")
+        help="enable debug level (DEBUG by default): NOTSET, DEBUG, INFO, WARNING, ERROR, CRITICAL")
     parser.add_argument(
-        '-c', '--close', type=str, nargs='?', const='SHUTDOWN', default='QUIT',
-        help="define application close behavior (QUIT by default): QUIT, SHUTDOWN, NONE")
+        '-e', '--exit', type=str, nargs='?', const='SHUTDOWN', default='QUIT',
+        help="define application exit behavior (QUIT by default): QUIT, SHUTDOWN, NONE")
+    parser.add_argument(
+        '-c', '--config', type=str, nargs='?', const='etc/astroberry.json',
+        default='etc/astroberry.json',
+        help="path to configuration file ('etc/astroberry.json' by default)")
     args = parser.parse_args()
 
     try:
@@ -2184,31 +2418,13 @@ if __name__ == '__main__':
     Gst.debug_set_default_threshold((50 - logging.getLogger().getEffectiveLevel() + 10)/10)
     Gst.debug_set_active(True)
 
-    if args.close.upper() == 'QUIT':
-        CLOSE = application.quit
-        ICON = 'share/icons/close_FILL0_wght400_GRAD0_opsz48.svg'
-    elif args.close.upper() == 'SHUTDOWN':
-        CLOSE = shutdown
-        ICON =  'share/icons/power_settings_new_FILL0_wght400_GRAD0_opsz48.svg'
-    elif args.close.upper() == 'NONE':
-        CLOSE = None
-        ICON = None
-    else:
-        parser.print_help()
-        sys.exit()
-
-    #TODO: Implement config file
-    try:
-        with open('etc/astroberry.json', 'r') as config:
-            parameters = json.load(config)
-    except FileNotFoundError:
-        logging.warning("'etc/astroberry.json' not found")
+    parameters = get_parameters(args)
 
     try:
         with picamera.PiCamera() as camera:
-            MODEL = camera.revision
+            parameters['model'] = camera.revision
 
-        screen = CameraScreen(MODEL, CLOSE, ICON)
+        screen = CameraScreen(application, parameters)
         screen.setup()
         screen.start()
         screen.show()
