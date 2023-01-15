@@ -1026,8 +1026,8 @@ class CameraScreen(QMainWindow):
                 self.__capturing_shutter_speed = str(int(exposure_time)) + '/1'
 
         self.__pipeline = Gst.parse_launch(
-            'rpicamsrc name=source preview=false fullscreen=false ' +
-            'sensor-mode=3 annotation-text-size=38' +
+            'rpicamsrc name=source preview=false fullscreen=false sensor-mode=3' +
+            ' annotation-text-size=' + str(self.parameters['annotation_text_size']) +
             ' annotation-mode=' + str(self.parameters['annotation_mode']) +
             ' sharpness=' + str(self.parameters['sharpness']) +
             ' shutter-speed=' + str(self.parameters['shutter_speed']) +
@@ -1638,6 +1638,7 @@ class CameraScreen(QMainWindow):
         self.parameters['white_balance'] = self.source.get_property('awb-mode')
         self.parameters['saturation'] = self.source.get_property('saturation')
         self.parameters['annotation_mode'] = self.source.get_property('annotation-mode')
+        self.parameters['annotation_text_size'] = self.source.get_property('annotation-text-size')
 
         with open(self.parameters['config'], 'w') as config:
             config.write(json.dumps(self.parameters))
@@ -2343,6 +2344,7 @@ def get_parameters(arguments):
             'shutter_speed': 0,
             'iso': 0,
             'annotation_mode': 0x00000000,
+            'annotation_text_size': 38,
             'photo_camera': True,
             'exit_action': 'QUIT',
             'exit_icon': 'close_FILL0_wght400_GRAD0_opsz48.svg'
