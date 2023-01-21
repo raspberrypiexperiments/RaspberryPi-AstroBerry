@@ -52,6 +52,8 @@ from PyQt5.QtWidgets import QGestureRecognizer, QApplication, QLabel, QPushButto
 
 import picamera
 
+from pijuice import PiJuice
+
 import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstVideo', '1.0')
@@ -596,6 +598,9 @@ class CameraScreen(QMainWindow):
         self.__parent = parent
         self.parameters = params
 
+        signal.signal(signal.SIGTERM, self.__on_terminate)
+        signal.signal(signal.SIGINT, self.__on_terminate)
+
         self.setGeometry(0,36,800,564)
         self.setWindowTitle('AstroBerry')
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
@@ -955,6 +960,17 @@ class CameraScreen(QMainWindow):
             self.__index = int(re.search(r'\d+',images[len(images)-1]).group())
             self.panel_display.set_index(self.__index)
 
+        cat = subprocess.Popen(['cat', '/boot/config.txt'], stdout=subprocess.PIPE)
+        self.__gpu_mem = int(subprocess.check_output(
+            ['grep', '-a', 'gpu_mem'],
+            stdin=cat.stdout).decode('utf-8').replace('gpu_mem=','').strip())
+
+        self.__sv_mem = round(psutil.virtual_memory().total/1024/1024)
+
+        self.__pijuice = PiJuice()
+        if self.__pijuice.config.GetFirmwareVersion() == {}:
+            self.__pijuice = None
+
         self.__capturing_contrast = None
         self.__capturing_white_balance = None
         self.__capturing_saturation = None
@@ -1071,6 +1087,7 @@ class CameraScreen(QMainWindow):
     def start(self):
         """Start the video stream from the camera
         """
+
         function_name = "'" + threading.currentThread().name + "'." + \
             type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
@@ -1156,6 +1173,7 @@ class CameraScreen(QMainWindow):
         1600x1200 UXGA
         2048x1536 QXGA
         3200x2400 QUXGA
+        4056x3040 MAX
 
         """
 
@@ -1169,8 +1187,14 @@ class CameraScreen(QMainWindow):
         width = structure.get_value('width')
         height = structure.get_value('height')
 
-        if width < 3200:
-            if width == 2048:
+        if (
+            (width < 4056 and self.__gpu_mem >= 512 and self.__sv_mem >= 2048-512-256) or
+            (width < 3200 and self.__gpu_mem >= 256 and self.__sv_mem >= 1024-256-128) or
+            (width < 2048 and self.__gpu_mem >= 128 and self.__sv_mem >= 512-128-64)):
+            if width == 3200:
+                width = 4056
+                height = 3040
+            elif width == 2048:
                 width = 3200
                 height = 2400
             elif width == 1600:
@@ -1223,7 +1247,9 @@ class CameraScreen(QMainWindow):
         1600x1200 UXGA
         2048x1536 QXGA
         3200x2400 QUXGA
+        4056x3040 MAX
         """
+
         function_name = "'" + threading.currentThread().name + "'." + \
             type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
 
@@ -1259,6 +1285,9 @@ class CameraScreen(QMainWindow):
             elif width == 3200:
                 width = 2048
                 height = 1536
+            elif width == 4056:
+                width = 3200
+                height = 2400
 
             log = function_name + ': width=' + str(width) + ', height=' + str(height)
             logging.info(log)
@@ -1627,22 +1656,24 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        structure = self.__source_caps.get_property('caps').get_structure(0)
+        if self.source is not None and self.__source_caps is not None:
+            structure = self.__source_caps.get_property('caps').get_structure(0)
 
-        self.parameters['width'] = structure.get_value('width')
-        self.parameters['height'] = structure.get_value('height')
-        self.parameters['sharpness'] = self.source.get_property('sharpness')
-        self.parameters['shutter_speed'] = self.source.get_property('shutter-speed')
-        self.parameters['iso'] = self.source.get_property('analog-gain')
-        self.parameters['contrast'] = self.source.get_property('contrast')
-        self.parameters['white_balance'] = self.source.get_property('awb-mode')
-        self.parameters['saturation'] = self.source.get_property('saturation')
-        self.parameters['annotation_mode'] = self.source.get_property('annotation-mode')
-        self.parameters['annotation_text_size'] = self.source.get_property('annotation-text-size')
+            self.parameters['width'] = structure.get_value('width')
+            self.parameters['height'] = structure.get_value('height')
+            self.parameters['sharpness'] = self.source.get_property('sharpness')
+            self.parameters['shutter_speed'] = self.source.get_property('shutter-speed')
+            self.parameters['iso'] = self.source.get_property('analog-gain')
+            self.parameters['contrast'] = self.source.get_property('contrast')
+            self.parameters['white_balance'] = self.source.get_property('awb-mode')
+            self.parameters['saturation'] = self.source.get_property('saturation')
+            self.parameters['annotation_mode'] = self.source.get_property('annotation-mode')
+            self.parameters['annotation_text_size'] = self.source.get_property(
+                'annotation-text-size')
 
-        with open(self.parameters['config'], 'w') as config:
-            config.write(json.dumps(self.parameters))
-        os.sync()
+            with open(self.parameters['config'], 'w') as config:
+                config.write(json.dumps(self.parameters))
+            os.sync()
 
         log = function_name + ': exit'
         logging.info(log)
@@ -2237,16 +2268,22 @@ class CameraScreen(QMainWindow):
         log = function_name + ': entry'
         logging.info(log)
 
-        self.source.set_property(
-            'annotation-text',
-            'CPU: ' + str(psutil.cpu_percent()) +
-            '% MEM: ' + str(psutil.virtual_memory().percent) +
-            '% TMP: ' + str(round(CPUTemperature().temperature, 1)) + 'C\n'
-            'DSK: ' + str(round(DiskUsage().usage, 1)) +
+        annotation_text = \
+            'CPU: ' + str(psutil.cpu_percent()) + \
+            '% MEM: ' + str(psutil.virtual_memory().percent) + \
+            '% TMP: ' + str(round(CPUTemperature().temperature, 1)) + \
+            'C\n DSK: ' + str(round(DiskUsage().usage, 1)) + \
             '% THR: ' + subprocess.check_output(
-                ['vcgencmd', 'get_throttled']).decode('utf-8').replace('throttled=','').strip() +
+                ['vcgencmd', 'get_throttled']).decode('utf-8').replace('throttled=','').strip() + \
             ' VOL: ' + subprocess.check_output(
-                ['vcgencmd', 'measure_volts']).decode('utf-8').replace('volt=','').strip() + '\n')
+                ['vcgencmd', 'measure_volts']).decode('utf-8').replace('volt=','').strip() + '\n'
+        if self.__pijuice is not None:
+            annotation_text = annotation_text + \
+                'BAT: ' + str(self.__pijuice.status.GetChargeLevel()['data']) + \
+                '% TMP: ' + str(self.__pijuice.status.GetBatteryTemperature()['data']) + \
+                'C VOL: ' + str(self.__pijuice.status.GetBatteryVoltage()['data']/1000) + 'V\n'
+
+        self.source.set_property('annotation-text', annotation_text)
 
         log = function_name + ': result=True'
         logging.info(log)
@@ -2308,6 +2345,49 @@ class CameraScreen(QMainWindow):
 
         log = function_name + ': exit'
         logging.info(log)
+
+
+    def closeEvent(self, event):
+        """Closes the application
+
+        Args:
+            event(QCloseEvent): close event
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.warning(log)
+
+        self.__on_control_menu_quit_button_clicked()
+
+        log = function_name + ': exit'
+        logging.warning(log)
+
+        event.accept()
+
+
+    def __on_terminate(self, *_):
+        """Terminates application
+
+        Args:
+            _ (int): signal identifier
+            _ (frame): frame
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.warning(log)
+
+        self.__on_control_menu_quit_button_clicked()
+
+        log = function_name + ': exit'
+        logging.warning(log)
+
+        sys.exit()
 
 
 
@@ -2375,8 +2455,6 @@ def get_parameters(arguments):
 
 
 if __name__ == '__main__':
-
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     application = QApplication(sys.argv)
 

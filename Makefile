@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-install:
+dependencies:
+	sudo apt install pijuice-gui -y
+
+install: dependencies
 	sudo mkdir -p /opt/astroberry/bin
 	sudo mkdir -p /opt/astroberry/src
 	sudo mkdir -p /opt/astroberry/share/icons
