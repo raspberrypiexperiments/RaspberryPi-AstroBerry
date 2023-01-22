@@ -22,12 +22,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-while getopts ":c:m:e:" flag;
-do
-    case "${flag}" in
-        c) config=${OPTARG};;
-        m) media=${OPTARG};;
-        e) exit=${OPTARG};;
-    esac
-done
-DISPLAY=:0 python3 src/astroberry.py -c $config -m $media -e $exit
+DISPLAY=:0 python3 src/astroberry_updater.py

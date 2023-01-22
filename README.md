@@ -25,13 +25,20 @@ repository.
 Installation procedure:
 
 ```bash
-git clone --recurse-submodules -j$(nproc) https://github.com/raspberrypiexperiments/RaspberryPi-AstroBerry.git
+git clone --recurse-submodules -j$(nproc) \
+    https://github.com/raspberrypiexperiments/RaspberryPi-AstroBerry.git
 ```
 ```bash
 cd RaspberryPi-AstroBerry
 ```
 ```
 make install
+```
+
+Optional:
+
+```bash
+make install_updater
 ```
 
 ## Uninstallation
@@ -46,6 +53,12 @@ cd ..
 ```
 ```bash
 rm -rf RaspberryPi-AstroBerry
+```
+
+Optional:
+
+```bash
+make uninstall_updater
 ```
 
 ## License

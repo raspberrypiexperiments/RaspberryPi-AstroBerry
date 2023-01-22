@@ -42,11 +42,34 @@ install: dependencies
 	sleep 3
 	sudo systemctl status astroberry.service
 
+install_updater:
+	sudo cp bin/astroberry_updater.sh /opt/astroberry/bin
+	sudo cp src/astroberry_updater.py /opt/astroberry/src 
+	sudo cp src/astroberry_updater.service /etc/systemd/system
+	sudo chmod 755 /opt/astroberry/bin/astroberry_updater.sh
+	sudo systemctl enable astroberry_updater.service
+	sudo systemctl start astroberry_updater.service || true
+	sleep 3
+	sudo systemctl status astroberry_updater.service
 
 uninstall:
 	sudo systemctl stop astroberry.service || true
 	sudo systemctl disable astroberry.service
+	
+	sudo rm -rf /etc/systemd/system/astroberry.service
 	sudo rm -rf /opt/astroberry
 	sudo rm -rf /home/$$USER/astroberry
 
+uninstall_updater:
+	sudo systemctl stop astroberry_updater.service || true
+	sudo systemctl disable astroberry_updater.service
+	sudo rm -rf /etc/systemd/system/astroberry_updater.service
+	
+
 reinstall: uninstall install
+
+reinstall_updater: uninstall_updater install_updater
+
+all: install install_updater
+
+uninstall_all: uninstall uninstall_updater
