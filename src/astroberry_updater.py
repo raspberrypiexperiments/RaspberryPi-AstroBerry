@@ -57,7 +57,9 @@ if __name__ == '__main__':
         if version != __version__:
             message_box = QMessageBox()
             message_box.setWindowTitle("AstroBerry Updater")
-            message_box.setText("New version of AstroBerry available. Do you want to upgrade?")
+            message_box.setText(
+                "New version of AstroBerry available. "
+                "All settings will be set to default. Do you want to upgrade?")
             message_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
             result = message_box.exec()
             if result == QMessageBox.Ok:
