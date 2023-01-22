@@ -2493,7 +2493,7 @@ def get_parameters(arguments):
         params = {
             'config': arguments.config,
             'icons': 'share/icons/',
-            'media': arguments.media,
+            'media': arguments.media + '/',
             'model': 'Unknown',
             'width': 800,
             'height': 608,
