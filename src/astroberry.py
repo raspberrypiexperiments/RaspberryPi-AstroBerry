@@ -41,6 +41,7 @@ import signal
 import json
 import subprocess
 import psutil
+
 from gpiozero import DiskUsage, CPUTemperature
 
 import PIL.Image
@@ -654,6 +655,7 @@ class CameraScreen(QMainWindow):
 
         signal.signal(signal.SIGTERM, self.__on_terminate)
         signal.signal(signal.SIGINT, self.__on_terminate)
+        signal.signal(signal.SIGABRT, self.__on_terminate)
 
         self.setGeometry(0,36,800,564)
         self.setWindowTitle('AstroBerry')
@@ -2527,7 +2529,6 @@ def get_parameters(arguments):
 
     log = function_name + ': result=' + str(params)
     logging.info(log)
-
 
     return params
 

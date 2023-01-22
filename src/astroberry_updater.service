@@ -24,6 +24,7 @@
 Description=AstroBerry Updater Service
 StartLimitIntervalSec=500
 StartLimitBurst=5
+After=display-manager.service
 
 [Service]
 Type=simple
