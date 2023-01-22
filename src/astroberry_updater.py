@@ -42,7 +42,7 @@ if __name__ == '__main__':
     SLEEP = 60*60
 
     while True:
-        time.sleep(SLEEP)
+        time.sleep(60)
         try:
             result = json.loads(subprocess.check_output(
                 ['curl',
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                 '/RaspberryPi-AstroBerry/commits/HEAD']).decode('utf-8'))
             if 'sha' not in result:
                 result = {'sha': __version__}
-        finally:
+        except subprocess.CalledProcessError:
             result = {'sha': __version__}
 
         version = result['sha'][0:7]
@@ -65,4 +65,7 @@ if __name__ == '__main__':
                     'cd /home/$USER/workspace/RaspberryPi-AstroBerry && git pull && make reinstall')
             else:
                 SLEEP = 60*60*24
+        else:
+            SLEEP = 60*60*24
+        time.sleep(SLEEP-60)
     sys.exit()
