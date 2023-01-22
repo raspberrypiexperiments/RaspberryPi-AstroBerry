@@ -23,6 +23,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+
 import sys
 import shutil
 import tempfile
@@ -58,7 +59,8 @@ import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstVideo', '1.0')
 from gi.repository import Gst, GstVideo, GLib
-Gst.init(None)
+from version import __version__
+
 
 
 class MouseGestureRecognizer(QGestureRecognizer):
@@ -656,7 +658,7 @@ class CameraScreen(QMainWindow):
         self.setGeometry(0,36,800,564)
         self.setWindowTitle('AstroBerry')
         self.setWindowFlags(Qt.Window | Qt.FramelessWindowHint)
-        self.setWindowIcon(QIcon(self.parameters['icons'] + 'astroberry_logo.svg'))
+        self.setWindowIcon(QIcon(self.parameters['icons'] + self.parameters['logo_icon']))
 
         self.window = QWidget()
 
@@ -2358,7 +2360,7 @@ class CameraScreen(QMainWindow):
                 log = function_name + ': battery_voltage=' + str(battery_voltage)
                 log.warning(log)
             annotation_text = annotation_text + '\n'
-
+        annotation_text = annotation_text + 'VER: ' + __version__ + ' '
         self.source.set_property('annotation-text', annotation_text)
 
         log = function_name + ': result=True'
@@ -2503,7 +2505,8 @@ def get_parameters(arguments):
             'annotation_text_size': 38,
             'photo_camera': True,
             'exit_action': 'QUIT',
-            'exit_icon': 'close_FILL0_wght400_GRAD0_opsz48.svg'
+            'exit_icon': 'close_FILL0_wght400_GRAD0_opsz48.svg',
+            'logo_icon': 'auto_awesome_FILL0_wght400_GRAD0_opsz48.svg'
         }
         with open(params['config'], 'w') as config:
             config.write(json.dumps(params))
@@ -2558,6 +2561,7 @@ if __name__ == '__main__':
         parser.print_help()
         sys.exit()
 
+    Gst.init(None)
     Gst.debug_set_colored(False)
     Gst.debug_set_default_threshold((50 - logging.getLogger().getEffectiveLevel() + 10)/10)
     Gst.debug_set_active(True)

@@ -32,6 +32,7 @@ install: dependencies
 	mkdir -p /home/$$USER/astroberry/media
 	sudo cp bin/astroberry.sh /opt/astroberry/bin
 	sudo cp src/astroberry.py /opt/astroberry/src
+	sudo bash -c "echo __version__ = \'`git rev-parse --short HEAD`\' > /opt/astroberry/src/version.py"
 	sudo cp share/icons/* /opt/astroberry/share/icons
 	sudo cp share/doc/* /opt/astroberry/share/doc || true
 	sudo cp src/astroberry.service /etc/systemd/system
