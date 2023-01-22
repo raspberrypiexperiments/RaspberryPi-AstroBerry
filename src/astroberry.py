@@ -2344,21 +2344,21 @@ class CameraScreen(QMainWindow):
                 annotation_text = annotation_text + 'BAT: ' + str(charge_level['data']) + '%'
             else:
                 log = function_name + ': charge_level=' + str(charge_level)
-                log.warning(log)
+                logging.warning(log)
             battery_temperature = self.__pijuice.status.GetBatteryTemperature()
             if 'data' in battery_temperature:
                 annotation_text = annotation_text + \
                     ' TMP: ' + str(battery_temperature['data']) + 'C'
             else:
                 log = function_name + ': battery_temperature=' + str(battery_temperature)
-                log.warning(log)
+                logging.warning(log)
             battery_voltage = self.__pijuice.status.GetBatteryVoltage()
             if 'data' in battery_voltage:
                 annotation_text = annotation_text + \
                     ' VOL: ' + str(battery_voltage['data']/1000) + 'V'
             else:
                 log = function_name + ': battery_voltage=' + str(battery_voltage)
-                log.warning(log)
+                logging.warning(log)
             annotation_text = annotation_text + '\n'
         annotation_text = annotation_text + 'VER: ' + __version__ + ' '
         self.source.set_property('annotation-text', annotation_text)
