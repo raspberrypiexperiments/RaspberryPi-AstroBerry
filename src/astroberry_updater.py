@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     application = QApplication(sys.argv)
-    SLEEP = 60
+    SLEEP = 60*60
 
     while True:
         time.sleep(SLEEP)
