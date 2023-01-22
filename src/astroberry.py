@@ -45,7 +45,7 @@ from gpiozero import DiskUsage, CPUTemperature
 import PIL.Image
 import PIL.ExifTags
 
-from PyQt5.QtCore import Qt, QEvent, QSize
+from PyQt5.QtCore import Qt, QEvent, QSize, QObject, pyqtSignal, QThread
 from PyQt5.QtGui import QIcon, QMouseEvent, QWheelEvent, QPixmap
 from PyQt5.QtWidgets import QGestureRecognizer, QApplication, QLabel, QPushButton, QMainWindow, \
     QWidget, QSwipeGesture, QHBoxLayout, QVBoxLayout, QGestureEvent
@@ -574,6 +574,58 @@ class Display(QLabel):
 
 
 
+class HardwareButtonMonitor(QObject):
+    """Hardware Button Monitor
+    """
+
+    clicked = pyqtSignal()
+
+
+    def __init__(self, pijuice):
+        """Initializes Hardware Button Monitor
+
+        Args:
+            pijuice (PiJuice): PiJuice device
+        """
+
+        super().__init__()
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+
+        log = function_name + ': entry'
+        logging.info(log)
+
+        self.__pijuice = pijuice
+
+        log = function_name + ': exit'
+        logging.info(log)
+
+
+    def run(self):
+        """Monitors hardware button clicks
+        """
+
+        function_name = "'" + threading.currentThread().name + "'." + \
+            type(self).__name__ + '.' + inspect.currentframe().f_code.co_name
+
+        log = function_name + ': loop'
+        logging.info(log)
+
+        while True:
+            time.sleep(1)
+            button_events = self.__pijuice.status.GetButtonEvents()
+            if 'data' in button_events:
+                if button_events['data']['SW2'] == 'SINGLE_PRESS':
+                    self.__pijuice.status.AcceptButtonEvent('SW2')
+                    self.clicked.emit()
+            else:
+                log = function_name + ': button_events=' + str(button_events)
+                logging.warning(log)
+
+
+
+
 class CameraScreen(QMainWindow):
     """Camera Screen
     """
@@ -970,6 +1022,13 @@ class CameraScreen(QMainWindow):
         self.__pijuice = PiJuice()
         if self.__pijuice.config.GetFirmwareVersion() == {}:
             self.__pijuice = None
+        else:
+            self.__thread = QThread()
+            monitor = HardwareButtonMonitor(self.__pijuice)
+            monitor.moveToThread(self.__thread)
+            self.__thread.started.connect(monitor.run)
+            monitor.clicked.connect(self.__on_control_shutter_button_clicked)
+            self.__thread.start()
 
         self.__capturing_contrast = None
         self.__capturing_white_balance = None
@@ -2278,10 +2337,27 @@ class CameraScreen(QMainWindow):
             ' VOL: ' + subprocess.check_output(
                 ['vcgencmd', 'measure_volts']).decode('utf-8').replace('volt=','').strip() + '\n'
         if self.__pijuice is not None:
-            annotation_text = annotation_text + \
-                'BAT: ' + str(self.__pijuice.status.GetChargeLevel()['data']) + \
-                '% TMP: ' + str(self.__pijuice.status.GetBatteryTemperature()['data']) + \
-                'C VOL: ' + str(self.__pijuice.status.GetBatteryVoltage()['data']/1000) + 'V\n'
+            charge_level = self.__pijuice.status.GetChargeLevel()
+            if 'data' in charge_level:
+                annotation_text = annotation_text + 'BAT: ' + str(charge_level['data']) + '%'
+            else:
+                log = function_name + ': charge_level=' + str(charge_level)
+                log.warning(log)
+            battery_temperature = self.__pijuice.status.GetBatteryTemperature()
+            if 'data' in battery_temperature:
+                annotation_text = annotation_text + \
+                    ' TMP: ' + str(battery_temperature['data']) + 'C'
+            else:
+                log = function_name + ': battery_temperature=' + str(battery_temperature)
+                log.warning(log)
+            battery_voltage = self.__pijuice.status.GetBatteryVoltage()
+            if 'data' in battery_voltage:
+                annotation_text = annotation_text + \
+                    ' VOL: ' + str(battery_voltage['data']/1000) + 'V'
+            else:
+                log = function_name + ': battery_voltage=' + str(battery_voltage)
+                log.warning(log)
+            annotation_text = annotation_text + '\n'
 
         self.source.set_property('annotation-text', annotation_text)
 
