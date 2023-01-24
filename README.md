@@ -2,8 +2,8 @@
 
 ## Overview
 
-This repository provides desktop GUI for Raspberry Pi Camera. As a unique feature it delivers manual
-control for shutter speed and ISO and enables shoot pictures in extremely dark conditions
+This repository provides desktop GUI for Raspberry Pi HQ Camera. As a unique feature it delivers manual
+control for shutter speed and ISO and enables shooting pictures in extremely dark conditions
 (astrophotography).
 
 ## Dependencies
@@ -14,7 +14,8 @@ repository.
 
 ## Known supported Raspberry Pi
 
-* Raspberry Pi 3B.
+* Raspberry Pi 3B,
+* Raspberry Pi 3A+.
 
 ## Known supported OS
 
