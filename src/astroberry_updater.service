@@ -31,6 +31,7 @@ Type=simple
 User=pi
 Group=pi
 WorkingDirectory=/opt/astroberry_updater
+Environment=PYTHONPATH=/opt/astroberry/src
 ExecStart=/opt/astroberry_updater/bin/astroberry_updater.sh
 StandardOutput=syslog
 StandardError=syslog
